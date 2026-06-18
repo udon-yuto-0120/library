@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Double Eight 動画ライブラリ</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 20px; background: #f4f6f9; color: #333; }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
+        .container { max-width: 600px; margin: 0 auto; }
+
+        .playlist-container { margin-bottom: 12px; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .playlist-header {
+            background-color: #ffffff;
+            padding: 15px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            transition: background 0.2s;
+        }
+        .playlist-header:hover { background-color: #edf2f7; }
+        .playlist-header::after { content: '▶'; font-size: 12px; color: #718096; transition: transform 0.2s; }
+        .playlist-container.is-open .playlist-header::after { transform: rotate(90deg); }
+
+        .video-links {
+            background-color: #f8fafc;
+            border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+            display: none;
+            padding: 10px 0;
+        }
+        .playlist-container.is-open .video-links { display: block; }
+
+        .video-item {
+            display: block;
+            padding: 10px 30px;
+            color: #3182ce;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+        .video-item:hover { background-color: #e2e8f0; text-decoration: underline; color: #2b6cb0; }
+        .loading { padding: 15px 30px; color: #718096; font-style: italic; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Double Eight 動画ライブラリ</h2>
+    
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPDVn5IzvvKQfHQRSAl8ddAO">
+        <div class="playlist-header">📂 2026 DDFFデモ見せ</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPDFxrDdWVv47rbduSobs3K_">
+        <div class="playlist-header">📂 Pathos Drive 2026</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPCjVE9lxyAh3SGEhXDvOXyo">
+        <div class="playlist-header">📂 Pathos Drive 2026 デモ見せ</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPCL8Js6wBWAzYAUVEqmqMBg">
+        <div class="playlist-header">📂 2026 DDCJ 1部</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPAMOafmDkdLuQB7_yDjHzM3">
+        <div class="playlist-header">📂 2026 DDCJ 4部</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPDwVZw7J1Yuma1scnXvhTh5">
+        <div class="playlist-header">📂 2026 DDCJ 3部</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+    <div class="playlist-container" data-playlist-id="PLlXvAT3RfzPAGdWyY5nFfHmmm_sW7Q44q_">
+        <div class="playlist-header">📂 追いコン 2026</div>
+        <div class="video-links"><div class="loading">動画一覧を読み込み中...</div></div>
+    </div>
+
+</div>
+
+<script>
+    // 🔑 あなたのAPIキー
+    const API_KEY = 'AIzaSyA6FUAusieqxRQpEym3WtEOjSr81C2O5mM';
+
+    const playlists = document.querySelectorAll('.playlist-container');
+
+    playlists.forEach(container => {
+        const playlistId = container.getAttribute('data-playlist-id');
+        const header = container.querySelector('.playlist-header');
+        const videoLinksDiv = container.querySelector('.video-links');
+
+        // タップでフォルダを開閉する
+        header.addEventListener('click', () => {
+            container.classList.toggle('is-open');
+        });
+
+        // それぞれの限定公開リストの中から、動画の一覧だけを直接自動で引っ張ってくる
+        fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${API_KEY}`)
+            .then(res => res.json())
+            .then(videoData => {
+                videoLinksDiv.innerHTML = ''; // 読み込み中表示を消す
+
+                if (videoData.items && videoData.items.length > 0) {
+                    videoData.items.forEach(item => {
+                        const videoTitle = item.snippet.title;
+                        const videoId = item.snippet.resourceId.videoId;
+                        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+                        const aTag = document.createElement('a');
+                        aTag.href = videoUrl;
+                        aTag.target = '_blank';
+                        aTag.rel = 'noopener noreferrer';
+                        aTag.className = 'video-item';
+                        aTag.innerText = `🎬 ${videoTitle}`;
+
+                        videoLinksDiv.appendChild(aTag);
+                    });
+                } else {
+                    videoLinksDiv.innerHTML = '<div class="loading">動画がありません</div>';
+                }
+            })
+            .catch(err => {
+                console.error('動画取得エラー:', err);
+                videoLinksDiv.innerHTML = '<div class="loading">動画の取得に失敗しました</div>';
+            });
+    });
+</script>
+
+</body>
+</html>
