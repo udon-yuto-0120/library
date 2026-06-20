@@ -40,26 +40,40 @@
 
 <script>
     const API_KEY = 'AIzaSyA6FUAusieqxRQpEym3WtEOjSr81C2O5mM';
-    
-    // 🔗 【修正完了！】正しい場所にURLを設定しました
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyYJDN8uIIUMdlHGYQtNK6iEg_K2sOtuakPyxKSK8gseHUyCmCy-hzOtpjKKHM5wo7n/exec';
 
     const libraryContainer = document.getElementById('libraryContainer');
     const searchInput = document.getElementById('searchInput');
 
-    // GASの隠し部屋におねだりして限定公開リストをもらう
-    fetch(GAS_API_URL)
-        .then(res => res.json())
-        .then(playlists => {
-            document.getElementById('mainLoading').remove();
-            playlists.forEach(list => {
-                createPlaylistUI(list.name, list.id);
-            });
-        })
-        .catch(err => {
-            document.getElementById('mainLoading').innerText = '動画の読み込みに失敗しました。管理者設定を確認してください。';
-        });
+    // 🌐 1. スプシから再生リスト一覧を引っ張ってくる処理（CORS・302対策版）
+    fetch(GAS_API_URL, {
+        method: 'GET',
+        mode: 'cors',
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('GASへの通信に失敗しました');
+        return res.json();
+    })
+    .then(playlists => {
+        const mainLoading = document.getElementById('mainLoading');
+        if (mainLoading) mainLoading.remove();
+        
+        if (playlists.length === 0) {
+            libraryContainer.innerHTML = '<div class="loading">登録されている再生リストがありません。スプシを確認してください。</div>';
+            return;
+        }
 
+        playlists.forEach(list => {
+            createPlaylistUI(list.name, list.id);
+        });
+    })
+    .catch(err => {
+        document.getElementById('mainLoading').innerText = '動画の読み込みに失敗しました。管理者設定を確認してください。';
+        console.error('Fetch error:', err);
+    });
+
+    // 📁 2. 画面にフォルダ（再生リスト）の見た目を作る処理
     function createPlaylistUI(name, id) {
         const containerDiv = document.createElement('div');
         containerDiv.className = 'playlist-container';
@@ -77,7 +91,7 @@
         mainLink.target = '_blank';
         mainLink.rel = 'noopener noreferrer';
         mainLink.className = 'playlist-main-link';
-        mainLink.innerText = '👉 リンク'; // 👈 ここを戻しました
+        mainLink.innerText = '👉 リンク';
 
         wrapperDiv.appendChild(headerDiv);
         wrapperDiv.appendChild(mainLink);
@@ -94,6 +108,7 @@
             containerDiv.classList.toggle('is-open');
         });
 
+        // 🎬 3. フォルダが開かれたらYouTube APIに中身の動画を取りに行く処理（ここを綺麗に復元しました！）
         fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${id}&key=${API_KEY}`)
             .then(res => res.json())
             .then(data => {
@@ -117,10 +132,11 @@
             })
             .catch(err => {
                 videoLinksDiv.innerHTML = '<div class="loading">限定公開動画の取得に失敗しました</div>';
+                console.error(err);
             });
     }
 
-    // 🔍 検索処理
+    // 🔍 4. キーワード検索処理
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         const containers = document.querySelectorAll('.playlist-container');
