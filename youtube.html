@@ -41,7 +41,7 @@
 <script>
     const API_KEY = 'AIzaSyA6FUAusieqxRQpEym3WtEOjSr81C2O5mM';
     
-    // 🔗 【修正完了！】正しい場所にGASのURLをセットしました！
+    // 🔗 【修正完了！】正しい場所にURLを設定しました
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzz-xIXBGc6pd0UVad1Lpq9lBb3H2OjL_e4SzcULUokESCn8OrHng1enmky3PMUb7dd/exec';
 
     const libraryContainer = document.getElementById('libraryContainer');
@@ -51,21 +51,13 @@
     fetch(GAS_API_URL)
         .then(res => res.json())
         .then(playlists => {
-            const mainLoading = document.getElementById('mainLoading');
-            if (mainLoading) mainLoading.remove();
-            
-            if (playlists.length === 0) {
-                libraryContainer.innerHTML = '<div class="loading">登録されている再生リストがありません。スプシを確認してください。</div>';
-                return;
-            }
-
+            document.getElementById('mainLoading').remove();
             playlists.forEach(list => {
                 createPlaylistUI(list.name, list.id);
             });
         })
         .catch(err => {
             document.getElementById('mainLoading').innerText = '動画の読み込みに失敗しました。管理者設定を確認してください。';
-            console.error(err);
         });
 
     function createPlaylistUI(name, id) {
@@ -85,7 +77,7 @@
         mainLink.target = '_blank';
         mainLink.rel = 'noopener noreferrer';
         mainLink.className = 'playlist-main-link';
-        mainLink.innerText = '👉 リンク'; // 👈 ここを元の綺麗な文字に戻しました！
+        mainLink.innerText = '👉 リンク'; // 👈 ここを戻しました
 
         wrapperDiv.appendChild(headerDiv);
         wrapperDiv.appendChild(mainLink);
